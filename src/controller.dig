@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Description</string>
+      <string>控制器</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>controller</string>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>10</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>rf-din输入选择信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>rf-in-sel</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>2</int>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="700"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>clk</string>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rst</string>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>opcode</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>7</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>funct</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>10</int>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="460"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>controller</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>clk,rst,opcode:7,funct:10</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>10</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>// 定义各类opcode
+`define LUI 7&apos;b0110111
+`define AUIPC 7&apos;b0010111
+`define JAL 7&apos;b1101111
+`define JALR 7&apos;b1100111
+`define LOGIC 7&apos;b1100011
+`define LOAD 7&apos;b0000011
+`define STORE 7&apos;b0100011
+`define ARITHMETIC_IMM 7&apos;b0010011
+`define ARITHMETIC 7&apos;b0110011
+
+// pc_in_sel
+`define PC_IN_PC_4 0		// PC+4
+`define PC_IN_AU 1		// 包括jal, jalr
+
+// rf_in_sel
+`define RF_IN_AU 0		// 包括算术逻辑操作结果、lui、auipc
+`define RF_IN_MEMORY 1
+`define RF_IN_PC_4 2
+
+// alu_op
+// 算术运算
+// AU_opcode = inst[30|14:12] = funct[8|2:0]
+`define AU_ADD 4&apos;b0000
+`define AU_SUB 4&apos;b1000
+`define AU_SLL 4&apos;b0001
+`define AU_SLT 4&apos;b0010
+`define AU_SLTU 4&apos;b0011
+`define AU_XOR 4&apos;b0100
+`define AU_SRL 4&apos;b0101
+`define AU_SRA 4&apos;b1101
+`define AU_OR 4&apos;b0110
+`define AU_AND 4&apos;b0111
+// 逻辑运算
+// LU_opcode = inst[14:12] = funct[2:0]
+`define LU_BEQ 3&apos;b000
+`define LU_BNE 3&apos;b001
+`define LU_BLT 3&apos;b100
+`define LU_BGE 3&apos;b101
+`define LU_BLTU 3&apos;b110
+`define LU_BGEU 3&apos;b111
+`define LU_DONOTHING 3&apos;b010
+
+// memory_op
+// memory_op = inst[6|14:12] = opcode[6] + funct[2:0]
+`define LB 4&apos;b0000
+`define LH 4&apos;b0001
+`define LW 4&apos;b0010
+`define LBU 4&apos;b0100
+`define LHU 4&apos;b0101
+`define SB 4&apos;b1000
+`define SH 4&apos;b1001
+`define SW 4&apos;b1010
+`define MEMORY_DONOTHING 4&apos;b1111
+
+module controller(clk, rst, opcode, funct,
+	memory_op, au_op, lu_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
+	rf_write, rf_in_sel);
+	input clk, rst;
+	input [6:0] opcode;
+	input [9:0] funct;
+	// input [31:0] imm;
+	// input [31:0] pc;
+	// input [31:0] alu_out;
+	
+	output [3:0] memory_op;
+	output [3:0] au_op;
+	output [2:0] lu_op;
+	output r1_pc_sel, r2_imm_sel;
+	output pc_load, pc_in_sel;
+	// output [31:0] pc_in;
+	output rf_write;
+	output [1:0] rf_in_sel;
+	// output [31:0] rf_din;
+
+	reg [3:0] memory_op = `MEMORY_DONOTHING;
+	reg [3:0] au_op;
+	reg [2:0] lu_op;
+	reg r1_pc_sel, r2_imm_sel;
+	// pc_load 默认为 1
+	reg pc_load = 1;
+	reg pc_in_sel;
+	// reg [31:0] pc_in;
+	reg rf_write;
+	reg [1:0] rf_in_sel;
+	// reg [31:0] rf_din;
+
+	// always @(posedge clk)
+	always @(opcode, funct)
+	begin
+		// 每一个时钟周期，都对那些会修改存储的控制信号进行初始化
+		memory_op = `MEMORY_DONOTHING;
+		pc_load = 0;
+		rf_write = 0;
+		pc_load = 1;
+		// 设置lu_op保证在非逻辑操作下，lu输出始终为1，
+		// 避免其他操作需要以au_out作为地址跳转时，选择器出错
+		lu_op = `LU_DONOTHING;
+		// 默认pc输入为pc+4
+		pc_in_sel = `PC_IN_PC_4;
+		
+		if (rst)
+		begin
+			memory_op = `MEMORY_DONOTHING;
+			au_op = 0;
+			lu_op = 0;
+			r1_pc_sel = 0;
+			r2_imm_sel = 0;
+			pc_load = 1;
+			pc_in_sel = `PC_IN_PC_4;
+			// pc_in = 0;
+			rf_write = 0;
+			rf_in_sel = `RF_IN_AU;
+			// rf_din = 0;
+		end
+		else
+		begin
+			case(opcode)
+				`LUI:
+				// LUI将符号位扩展的立即数放到目标寄存器rd的高20位，将rd的低12位填0。
+				begin
+					// 令alu，进行imm+0
+					au_op = `AU_ADD;
+					r1_pc_sel = 0;
+					r2_imm_sel = 1;
+					rf_write = 1;
+					rf_in_sel = `RF_IN_AU;
+					
+				end
+				`AUIPC:
+				// AUIPC从20位符号位扩展的立即数构建一个32位偏移量，
+				// 将其低12位填0，然后将这个偏移量加到pc上，
+				// 最后将结果写入寄存器rd。
+				begin
+					au_op = `AU_ADD;
+					r1_pc_sel = 1;
+					r2_imm_sel = 1;
+					
+					rf_write = 1;
+					rf_in_sel = `RF_IN_AU;
+				end
+				`JAL:
+				// JAL将偏移量（立即数）符号扩展，加到pc上，形成跳转目标地址，
+				// JAL将跳转指令后面指令的地址（pc+4）保存到寄存器rd中。
+				begin
+					au_op = `AU_ADD;
+					r1_pc_sel = 1;
+					r2_imm_sel = 1;
+					pc_in_sel = `PC_IN_AU;
+					
+					rf_write = 1;
+					// 选择pc+4存入寄存器
+					rf_in_sel = `RF_IN_PC_4;
+					
+				end
+				`JALR:
+				// 通过将12位有符号立即数加上rs1，
+				// 然后将结果的最低位设置为0，作为目标地址。
+				// 跳转指令后面指令的地址（pc+4） 保存到寄存器rd中。
+				begin
+					// 最低位置零操作放在模块pc中
+					au_op = `AU_ADD;
+					r1_pc_sel = 0;
+					r2_imm_sel = 1;
+					pc_in_sel = `PC_IN_AU;
+					
+					rf_write = 1;
+					// 选择pc+4存入寄存器
+					rf_in_sel = `RF_IN_PC_4;
+				end
+				`LOGIC:
+				begin
+					// au计算跳转地址
+					au_op = `AU_ADD;
+					r1_pc_sel = 1;
+					r2_imm_sel = 1;
+					// lu进行比较，输出是否跳转的控制信号
+					lu_op = funct[2:0];
+
+					// 这里由一个硬件复用器实现
+					// lu_out = 1: pc = au_out
+					// lu_out = 0: pc = pc+4
+					pc_in_sel = `PC_IN_AU;
+				end
+				// load, store:有效字节地址是通过将r1与imm相加而获得的
+				`LOAD:
+				// Load指令将存储器中的一个值复制到寄存器rd中
+				begin
+					// 组装memory_op
+					memory_op[2:0] = funct[2:0];
+					memory_op[3] = opcode[5];
+					
+					// 使用au计算address
+					au_op = `AU_ADD;
+					r1_pc_sel = 0;
+					r2_imm_sel = 1;
+					
+					rf_write = 1;
+					rf_in_sel = `RF_IN_MEMORY;
+					
+				end
+				`STORE:
+				// Store指令将寄存器rs2中的值复制到存储器中。
+				begin
+					// 组装memory_op
+					memory_op[2:0] = funct[2:0];
+					memory_op[3] = opcode[5];
+					
+					// 使用au计算address
+					au_op = `AU_ADD;
+					r1_pc_sel = 0;
+					r2_imm_sel = 1;
+
+					
+				end
+				`ARITHMETIC_IMM:
+				begin
+					r1_pc_sel = 0;
+					// 以立即数作为au第2个输入
+					r2_imm_sel = 1;
+
+					// 将AU_out写入rf
+					rf_write = 1;
+					rf_in_sel = `RF_IN_AU;
+
+					//设置ALU_opcode
+					// alu_op = funct[8|2:0]
+					au_op[2:0] = funct[2:0];
+					au_op[3] = funct[8];
+				end
+				`ARITHMETIC:
+				begin
+					// 以r1, r2作为au输入
+					r1_pc_sel = 0;
+					r2_imm_sel = 0;
+	
+					// 将AU_out写入rf
+					rf_write = 1;
+					rf_in_sel = `RF_IN_AU;
+					
+					//设置ALU_opcode
+					au_op[2:0] = funct[2:0];
+					au_op[3] = funct[8];
+				end
+			endcase
+		end
+	end
+endmodule</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>memory_op:4,au_op:4,lu_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>pc输入选择信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>pc-in-sel</string>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="580"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>存储器控制信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>memory-op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>au控制信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>au-op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>r2, imm 选择控制信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>r2-imm-sel</string>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="460"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>pc是否要加载下一条指令的控制信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>pc-load</string>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="520"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>rf 写 控制信号</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>rf-write</string>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="640"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>r1-pc-sel</string>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>lu-op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>3</int>
+        </entry>
+      </elementAttributes>
+      <pos x="960" y="340"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="680" y="320"/>
+      <p2 x="860" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="820" y="640"/>
+      <p2 x="960" y="640"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="260"/>
+      <p2 x="480" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="260"/>
+      <p2 x="920" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="840" y="580"/>
+      <p2 x="960" y="580"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="360"/>
+      <p2 x="820" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="520"/>
+      <p2 x="960" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="300"/>
+      <p2 x="300" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="300"/>
+      <p2 x="880" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="460"/>
+      <p2 x="340" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="460"/>
+      <p2 x="960" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="300" y="240"/>
+      <p2 x="480" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="240"/>
+      <p2 x="940" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="400"/>
+      <p2 x="960" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="340"/>
+      <p2 x="840" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="920" y="340"/>
+      <p2 x="960" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="340" y="280"/>
+      <p2 x="480" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="940" y="280"/>
+      <p2 x="960" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="280"/>
+      <p2 x="900" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="220"/>
+      <p2 x="480" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="220"/>
+      <p2 x="960" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="380"/>
+      <p2 x="320" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="380"/>
+      <p2 x="800" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="700"/>
+      <p2 x="960" y="700"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="260"/>
+      <p2 x="320" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="300"/>
+      <p2 x="880" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="380"/>
+      <p2 x="800" y="700"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="280"/>
+      <p2 x="900" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="340" y="280"/>
+      <p2 x="340" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="820" y="360"/>
+      <p2 x="820" y="640"/>
+    </wire>
+    <wire>
+      <p1 x="920" y="260"/>
+      <p2 x="920" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="840" y="340"/>
+      <p2 x="840" y="580"/>
+    </wire>
+    <wire>
+      <p1 x="300" y="240"/>
+      <p2 x="300" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="940" y="240"/>
+      <p2 x="940" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="320"/>
+      <p2 x="860" y="520"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

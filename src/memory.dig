@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Description</string>
+      <string>数据存储器</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>memory</string>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>6</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>clk</string>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rst</string>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>操作码</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="480"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>输入</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>din</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>输出</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>dout</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>decSigned</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="880" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>memory</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>clk,rst,din:32,op:4,address:32</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>6</int>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>dout:32</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>// op = inst[5|14:12] = opcode[5] + funct[2:0]
+`define LB 4&apos;b0000
+`define LH 4&apos;b0001
+`define LW 4&apos;b0010
+`define LBU 4&apos;b0100
+`define LHU 4&apos;b0101
+`define SB 4&apos;b1000
+`define SH 4&apos;b1001
+`define SW 4&apos;b1010
+`define DO_NOTHING 4&apos;b1111
+
+module memory(clk, rst, op, address, din, dout);
+	input clk, rst;
+	input [31:0] din;
+	input [3:0] op;
+	// 一切计算操作都放入ALU中，不再在memory中进行address=base+offset的计算
+	// input [31:0] base;
+	// input [31:0] offset;
+	input [31:0] address;
+	output [31:0] dout;
+	
+	reg [31:0] dout;
+	// 存储空间 2^32 字节，以1字节=8位为一个单位，字节寻址
+	// reg [7:0] memory[0:4294967295];
+	// 2^32位太大，运行有问题，改为2^16字节
+	reg [7:0] memory[0:65535];
+		
+
+	// 用于存储未经符号扩展的16位中间变量
+	// reg [15:0] h_out;
+
+	integer i;
+	// integer address;
+
+/*
+	// 仅用于测试时初始化memory
+	initial
+	begin
+		for (i = 0; i &lt;= 65535; i++)
+			begin
+				memory[i] = i;
+			end
+	end
+*/
+	
+	always @(op, address)
+	begin
+		case(op)
+			`LB: 
+			begin
+				// 有符号扩展
+				dout = $signed(memory[address]);
+			end
+			`LH:
+			begin
+				dout[15:8] = memory[address];
+				dout[7:0] = memory[address+1];
+				dout = $signed(dout);
+			end
+			`LW:
+			begin
+				dout[31:24] = memory[address];
+				dout[23:16] = memory[address+1];
+				dout[15:8] = memory[address+2];
+				dout[7:0] = memory[address+3];
+			end
+			`LBU:
+			begin
+				// 无符号扩展
+				dout = $unsigned(memory[address]);
+			end
+			`LHU:
+			begin
+				dout[15:8] = memory[address];
+				dout[7:0] = memory[address+1];
+				// dout = $unsigned(h_out);
+			end
+		endcase
+	end
+	
+	always @(posedge clk)
+	begin
+		if (rst)
+		begin
+			for (i = 0; i &lt;= 65535; i++)
+			begin
+				memory[i] = 0;
+			end
+		end
+		else if (op == `DO_NOTHING)
+		begin
+			// 不做任何操作
+		end
+		else
+		begin
+			case(op)
+				`SB:
+				begin
+					memory[address] = din[7:0];
+					dout = din[7:0];
+				end
+				`SH:
+				begin
+					memory[address] = din[15:8];
+					memory[address+1] = din[7:0];
+					dout = din[15:0];
+				end
+				`SW:
+				begin
+					memory[address] = din[31:24];
+					memory[address+1] = din[23:16];
+					memory[address+2] = din[15:8];
+					memory[address+3] = din[7:0];
+					dout = din;
+				end
+			endcase
+		end
+	end
+
+endmodule</string>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>address</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="540"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="520" y="320"/>
+      <p2 x="640" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="480"/>
+      <p2 x="560" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="420"/>
+      <p2 x="540" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="340"/>
+      <p2 x="640" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="760" y="340"/>
+      <p2 x="880" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="360"/>
+      <p2 x="520" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="360"/>
+      <p2 x="640" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="300"/>
+      <p2 x="640" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="540"/>
+      <p2 x="580" y="540"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="380"/>
+      <p2 x="640" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="360"/>
+      <p2 x="560" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="380"/>
+      <p2 x="580" y="540"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="320"/>
+      <p2 x="520" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="340"/>
+      <p2 x="540" y="420"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

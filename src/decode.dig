@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Description</string>
+      <string>指令解码器</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>decode</string>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>6</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>输入的32位指令</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>inst</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="200" y="240"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>opcode</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>7</int>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="240"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rd</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="480"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>funct</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>10</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs2</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>12位立即数和20位立即数都从此输出</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>imm</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="620" y="540"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>decode</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>inst:32</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>6</int>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>opcode:7,funct:10,rs1:5,rs2:5,rd:5,imm:32</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>// 对inst进行解码，并根据文档对imm进行 有/无 符号扩展
+
+`define R 7&apos;b0110011
+// jalr
+`define I_J 7&apos;b1100111
+// I_register
+`define I_R 7&apos;b0000011
+// I_arithmetic
+`define I_A 7&apos;b0010011
+`define S 7&apos;b0100011
+`define B 7&apos;b1100011
+// lui
+`define U_L 7&apos;b0110111
+// auipc
+`define U_A 7&apos;b0010111
+// jal
+`define U_J 7&apos;b1101111
+
+module decode(inst, opcode, rd, funct, rs1, rs2, imm);
+	// input clk, rst;
+	input [31:0] inst;
+	output [6:0] opcode;
+	output [9:0] funct;
+	output [4:0] rs1, rs2, rd;
+	output [31:0] imm;
+
+	reg [6:0] opcode;
+	reg [9:0] funct;
+	reg [4:0] rs1, rs2, rd;
+	reg [31:0] imm;
+
+/*
+	// 有错误
+	function [4:0] get_rs1;
+		input inst;
+	begin
+		get_rs1 = inst[19:15];
+	end
+	endfunction
+*/
+
+	// 在指令发生变化时执行
+	always @(inst)
+	begin
+		// 对在指令中固定位置的部分赋初值
+		opcode = inst[6:0];
+		funct[2:0] = inst[14:12];
+		rd = inst[11:7];
+		rs1 = inst[19:15];
+		rs2 = inst[24:20];
+		// 对imm和funct[9:3]归零
+		imm = 0;
+		funct[9:3] = 0;
+
+/*
+		if (rst)
+		begin
+			opcode = 0;
+			funct = 0;
+			rs1 = 0;
+			rs2 = 0;
+			rd = 0;
+			imm = 0;
+		end
+*/
+		// else if (opcode == `R)
+		if (opcode == `R)
+		begin
+			funct[9:3] = inst[31:25];
+		end
+		else if (opcode == `I_J || opcode == `I_R || opcode == `I_A)
+		begin
+			rs2 = 0;
+			if (funct[2:0] == 3&apos;b001 || funct[2:0] == 3&apos;b101)
+			// 表明是移位操作，不进行有符号扩展
+			begin
+				imm[11:0] = inst[31:20];
+			end
+			else
+			// 进行有符号扩展
+			begin
+				imm = $signed(inst[31:20]);
+			end
+		end
+		else if (opcode == `S)
+		begin
+			rd = 0;
+			imm[4:0] = inst[11:7];
+			imm[11:5] = inst[31:25];
+			imm = $signed(imm[11:0]);
+		end
+		else if (opcode == `B)
+		begin
+			// 条件跳转指令中imm[0]永远为0（和jal相同）
+			rd = 0;
+			imm[11] = inst[7];
+			imm[4:1] = inst[11:8];
+			imm[10:5] = inst[30:25];
+			imm[12] = inst[31];
+			imm = $signed(imm[12:0]);
+		end
+		else if (opcode == `U_L || opcode == `U_A)
+		begin
+			funct = 0;
+			rs1 = 0;
+			rs2 = 0;
+			imm[31:12] = inst[31:12];
+		end
+		else if (opcode == `U_J)
+		begin
+			funct = 0;
+			rs1 = 0;
+			rs2 = 0;
+			imm[19:12] = inst[19:12];
+			imm[11] = inst[20];
+			imm[10:1] = inst[30:21];
+			imm[20] = inst[31];
+			imm = $signed(imm[20:0]);
+		end
+
+		if (opcode == `I_A &amp;&amp; inst[14:12] == 3&apos;b101 &amp;&amp; inst[30] == 1)
+		// 表明该指令为srai
+		// 令其funct[8]=1，这样避免了在controller中无法区分srli和srai的问题，
+		// 使得controller中无需传入imm
+		begin
+			funct[8] = 1;
+		end
+	end
+endmodule</string>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="240"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="440" y="240"/>
+      <p2 x="620" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="200" y="240"/>
+      <p2 x="320" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="320"/>
+      <p2 x="540" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="480"/>
+      <p2 x="620" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="260"/>
+      <p2 x="600" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="420"/>
+      <p2 x="620" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="340"/>
+      <p2 x="520" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="280"/>
+      <p2 x="580" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="360"/>
+      <p2 x="620" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="300"/>
+      <p2 x="620" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="300"/>
+      <p2 x="560" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="540"/>
+      <p2 x="620" y="540"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="300"/>
+      <p2 x="560" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="280"/>
+      <p2 x="580" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="260"/>
+      <p2 x="600" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="340"/>
+      <p2 x="520" y="540"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="320"/>
+      <p2 x="540" y="480"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

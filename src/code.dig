@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Description</string>
+      <string>根据指令前8位的地址，取出完整32位指令</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>code</string>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>4</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>指令地址</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>pc</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="160" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>32位的指令</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>inst</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="520" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>code</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>pc:32</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>4</int>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>inst:32</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>module code(pc, inst);
+	input [31:0] pc;
+	output [31:0] inst;
+	
+	reg [31:0] inst;
+	// 提供2^16字节 地址空间
+	reg [7:0] r[0:65536];
+	
+	always @(pc)
+	begin
+		// 组装指令
+		inst[31: 24] = r[pc];
+		inst[23: 16] = r[pc+1];
+		inst[15: 8] = r[pc+2];
+		inst[7: 0] = r[pc+3];
+	end
+
+	initial
+	begin
+r[0] = 8&apos;b00000000;
+r[1] = 8&apos;b00010000;
+r[2] = 8&apos;b00000000;
+r[3] = 8&apos;b10010011;
+
+r[4] = 8&apos;b00000000;
+r[5] = 8&apos;b00100000;
+r[6] = 8&apos;b00000001;
+r[7] = 8&apos;b00010011;
+
+r[8] = 8&apos;b00000000;
+r[9] = 8&apos;b00100000;
+r[10] = 8&apos;b10000001;
+r[11] = 8&apos;b10110011;
+
+r[12] = 8&apos;b00000000;
+r[13] = 8&apos;b00110000;
+r[14] = 8&apos;b00100000;
+r[15] = 8&apos;b00100011;
+
+	end
+endmodule</string>
+        </entry>
+      </elementAttributes>
+      <pos x="300" y="220"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="160" y="220"/>
+      <p2 x="300" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="380" y="220"/>
+      <p2 x="520" y="220"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Description</string>
+      <string>逻辑运算单元
+输出0或1</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>lu</string>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>6</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>in1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>in2</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>lu</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>op:3,in1:32,in2:32</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>6</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>`define LU_BEQ 3&apos;b000
+`define LU_BNE 3&apos;b001
+`define LU_BLT 3&apos;b100
+`define LU_BGE 3&apos;b101
+`define LU_BLTU 3&apos;b110
+`define LU_BGEU 3&apos;b111
+`define LU_DONOTHING 3b&apos;010
+
+module lu(op, in1, in2, out);
+	input [2:0] op;
+	input [31:0] in1, in2;
+	output out;
+
+	reg out = 1;
+
+	always @(op, in1, in2)
+	begin
+		case(op)
+			// 逻辑运算
+			`LU_BEQ:
+				if($signed(in1) == $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`LU_BNE:
+				if($signed(in1) != $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`LU_BLT:
+				if($signed(in1) &lt; $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`LU_BGE:
+				if($signed(in1) &gt;= $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`LU_BLTU:
+				if($unsigned(in1) &lt; $unsigned(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`LU_BGEU:
+				if($unsigned(in1) &gt;= $unsigned(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			default: out = 1;
+		endcase
+	end
+endmodule</string>
+        </entry>
+      </elementAttributes>
+      <pos x="440" y="260"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>out</string>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>3</int>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="260"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="320" y="320"/>
+      <p2 x="340" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="260"/>
+      <p2 x="440" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="340" y="280"/>
+      <p2 x="440" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="280"/>
+      <p2 x="640" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="380"/>
+      <p2 x="360" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="300"/>
+      <p2 x="440" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="340" y="280"/>
+      <p2 x="340" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="300"/>
+      <p2 x="360" y="380"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

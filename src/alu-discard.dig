@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>1</version>
+  <attributes>
+    <entry>
+      <string>Label</string>
+      <string>alu</string>
+    </entry>
+    <entry>
+      <string>shapeType</string>
+      <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Width</string>
+      <int>6</int>
+    </entry>
+  </attributes>
+  <visualElements>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>操作指令</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>op</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="420" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>输入1</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>in1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="420" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>输入2</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>in2</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+      </elementAttributes>
+      <pos x="420" y="460"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>IVERILOG</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>alu</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>op:4,in1:32,in2:32</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>out:32</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>// addi, xori, slli，等立即数操作，由控制器来控制输入ALU的是寄存器数据还是立即数，
+// ALU只负责计算in1和in2
+
+// ALU_arithmetic_opcode = inst[30|14:12]
+// ALU_logic_opcode = 1|inst[14:12]（除beq和bge）（最高位始终为1）
+// 由于beq与sub编码冲突，beq设为1010
+// 由于bge与sra编码冲突，bge设为1011
+/*
+`define ALU_ADD 0
+`define ALU_SUB 8
+`define ALU_SLL 1
+`define ALU_SLT 2
+`define ALU_SLTU 3
+`define ALU_XOR 4
+`define ALU_SRL 5
+`define ALU_SRA 13
+`define ALU_OR 6
+`define ALU_AND 7
+*/
+// 算术运算
+`define ALU_ADD 4&apos;b0000
+`define ALU_SUB 4&apos;b1000
+`define ALU_SLL 4&apos;b0001
+`define ALU_SLT 4&apos;b0010
+`define ALU_SLTU 4&apos;b0011
+`define ALU_XOR 4&apos;b0100
+`define ALU_SRL 4&apos;b0101
+`define ALU_SRA 4&apos;b1101
+`define ALU_OR 4&apos;b0110
+`define ALU_AND 4&apos;b0111
+// 逻辑运算
+`define ALU_BEQ 4&apos;b1010
+`define ALU_BNE 4&apos;b1001
+`define ALU_BLT 4&apos;b1100
+`define ALU_BGE 4&apos;b1011
+`define ALU_BLTU 4&apos;b1110
+`define ALU_BGEU 4&apos;b1111
+
+module alu(op, in1, in2, out);
+	input [3:0] op;
+	input [31:0] in1, in2;
+	output [31:0] out;
+
+	reg [31:0] out;
+	
+	// 当op或in1或in2 发生变化时，执行下面代码
+	always @(op or in1 or in2)
+	begin
+		case(op)
+			// 算术运算
+			`ALU_ADD: out = in1 + in2;
+			`ALU_SUB: out = in1 - in2;
+			// 逻辑左移
+			// 移位操作数是无符号数，且只取低5位作为有效数
+			`ALU_SLL: out = in1 &lt;&lt; in2[4:0];
+			`ALU_SLT: 
+				if($signed(in1) &lt; $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_SLTU:
+				if($unsigned(in1) &lt; $unsigned(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_XOR: out = in1 ^ in2;
+			// 逻辑右移
+			`ALU_SRL: out = in1 &gt;&gt; in2[4:0];
+			// 算术右移
+			// 这里取低5位作为有效数，
+			// 也有效的避免了srai操作中imm中第十位为1造成的影响
+			`ALU_SRA: out = $signed(in1) &gt;&gt;&gt; in2[4:0];
+			`ALU_OR: out = in1 | in2;
+			`ALU_AND: out = in1 &amp; in2;
+			
+			// 逻辑运算
+			`ALU_BEQ:
+				if($signed(in1) == $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_BNE:
+				if($signed(in1) != $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_BLT:
+				if($signed(in1) &lt; $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_BGE:
+				if($signed(in1) &gt;= $signed(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_BLTU:
+				if($unsigned(in1) &lt; $unsigned(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			`ALU_BGEU:
+				if($unsigned(in1) &gt;= $unsigned(in2)) 
+					out = 1; 
+				else
+					out = 0;
+			default: out = 0;
+		endcase
+	end
+endmodule</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>6</int>
+        </entry>
+      </elementAttributes>
+      <pos x="560" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>计算结果</string>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>out</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>32</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>decSigned</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="780" y="320"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="680" y="320"/>
+      <p2 x="780" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="320"/>
+      <p2 x="560" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="340"/>
+      <p2 x="560" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="300"/>
+      <p2 x="560" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="380"/>
+      <p2 x="440" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="460"/>
+      <p2 x="460" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="320"/>
+      <p2 x="440" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="340"/>
+      <p2 x="460" y="460"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
