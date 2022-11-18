@@ -2,4 +2,6 @@
 
 仿真软件采用了[Digital](https://github.com/hneemann/Digital)
 
-实现了除`fence`,` ecall`, `ebreak`, `csrr`指令外的其他RV32I指令
+实现了除`fence`,` ecall`, `ebreak`, `csrr`指令外的其他RV32I指令。
+
+各模块均采用verilog实现
