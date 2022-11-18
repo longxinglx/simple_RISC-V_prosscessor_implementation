@@ -164,7 +164,6 @@
 `define SB 4&apos;b1000
 `define SH 4&apos;b1001
 `define SW 4&apos;b1010
-`define MEMORY_DONOTHING 4&apos;b1111
 
 module controller(clk, rst, opcode, funct,
 	memory_op, au_op, lu_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
@@ -186,7 +185,7 @@ module controller(clk, rst, opcode, funct,
 	output [1:0] rf_in_sel;
 	// output [31:0] rf_din;
 
-	reg [3:0] memory_op = `MEMORY_DONOTHING;
+	reg [3:0] memory_op = 0;
 	reg [3:0] au_op;
 	reg [2:0] lu_op;
 	reg r1_pc_sel, r2_imm_sel;
@@ -202,7 +201,7 @@ module controller(clk, rst, opcode, funct,
 	always @(opcode, funct)
 	begin
 		// 每一个时钟周期，都对那些会修改存储的控制信号进行初始化
-		memory_op = `MEMORY_DONOTHING;
+		memory_op = 0;
 		pc_load = 0;
 		rf_write = 0;
 		pc_load = 1;
@@ -214,7 +213,7 @@ module controller(clk, rst, opcode, funct,
 		
 		if (rst)
 		begin
-			memory_op = `MEMORY_DONOTHING;
+			memory_op = 0;
 			au_op = 0;
 			lu_op = 0;
 			r1_pc_sel = 0;
