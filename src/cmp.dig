@@ -8,12 +8,12 @@
     </entry>
     <entry>
       <string>Description</string>
-      <string>逻辑运算单元
+      <string>比较单元
 输出0或1</string>
     </entry>
     <entry>
       <string>Label</string>
-      <string>lu</string>
+      <string>cmp</string>
     </entry>
     <entry>
       <string>Width</string>
@@ -58,7 +58,7 @@
         </entry>
         <entry>
           <string>Label</string>
-          <string>lu</string>
+          <string>cmp</string>
         </entry>
         <entry>
           <string>externalInputs</string>
@@ -70,15 +70,15 @@
         </entry>
         <entry>
           <string>Code</string>
-          <string>`define LU_BEQ 3&apos;b000
-`define LU_BNE 3&apos;b001
-`define LU_BLT 3&apos;b100
-`define LU_BGE 3&apos;b101
-`define LU_BLTU 3&apos;b110
-`define LU_BGEU 3&apos;b111
-`define LU_DONOTHING 3b&apos;010
+          <string>`define CMP_BEQ 3&apos;b000
+`define CMP_BNE 3&apos;b001
+`define CMP_BLT 3&apos;b100
+`define CMP_BGE 3&apos;b101
+`define CMP_BLTU 3&apos;b110
+`define CMP_BGEU 3&apos;b111
+`define CMP_DONOTHING 3&apos;b010
 
-module lu(op, in1, in2, out);
+module cmp(op, in1, in2, out);
 	input [2:0] op;
 	input [31:0] in1, in2;
 	output out;
@@ -89,32 +89,32 @@ module lu(op, in1, in2, out);
 	begin
 		case(op)
 			// 逻辑运算
-			`LU_BEQ:
+			`CMP_BEQ:
 				if($signed(in1) == $signed(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`LU_BNE:
+			`CMP_BNE:
 				if($signed(in1) != $signed(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`LU_BLT:
+			`CMP_BLT:
 				if($signed(in1) &lt; $signed(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`LU_BGE:
+			`CMP_BGE:
 				if($signed(in1) &gt;= $signed(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`LU_BLTU:
+			`CMP_BLTU:
 				if($unsigned(in1) &lt; $unsigned(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`LU_BGEU:
+			`CMP_BGEU:
 				if($unsigned(in1) &gt;= $unsigned(in2)) 
 					out = 1; 
 				else

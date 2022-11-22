@@ -153,11 +153,6 @@
       <pos x="1280" y="260"/>
     </visualElement>
     <visualElement>
-      <elementName>lu.dig</elementName>
-      <elementAttributes/>
-      <pos x="1440" y="80"/>
-    </visualElement>
-    <visualElement>
       <elementName>And</elementName>
       <elementAttributes>
         <entry>
@@ -194,6 +189,11 @@
       <elementName>alu.dig</elementName>
       <elementAttributes/>
       <pos x="1440" y="240"/>
+    </visualElement>
+    <visualElement>
+      <elementName>cmp.dig</elementName>
+      <elementAttributes/>
+      <pos x="1440" y="80"/>
     </visualElement>
   </visualElements>
   <wires>

@@ -144,15 +144,16 @@
 `define ALU_SRA 4&apos;b1101
 `define ALU_OR 4&apos;b0110
 `define ALU_AND 4&apos;b0111
+// cmp_op
 // 逻辑运算
-// LU_opcode = inst[14:12] = funct[2:0]
-`define LU_BEQ 3&apos;b000
-`define LU_BNE 3&apos;b001
-`define LU_BLT 3&apos;b100
-`define LU_BGE 3&apos;b101
-`define LU_BLTU 3&apos;b110
-`define LU_BGEU 3&apos;b111
-`define LU_DONOTHING 3&apos;b010
+// CMP_opcode = inst[14:12] = funct[2:0]
+`define CMP_BEQ 3&apos;b000
+`define CMP_BNE 3&apos;b001
+`define CMP_BLT 3&apos;b100
+`define CMP_BGE 3&apos;b101
+`define CMP_BLTU 3&apos;b110
+`define CMP_BGEU 3&apos;b111
+`define CMP_DONOTHING 3&apos;b010
 
 // memory_op
 // memory_op = inst[6|14:12] = opcode[6] + funct[2:0]
@@ -166,7 +167,7 @@
 `define SW 4&apos;b1010
 
 module controller(clk, rst, opcode, funct,
-	memory_op, alu_op, lu_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
+	memory_op, alu_op, cmp_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
 	rf_write, rf_in_sel);
 	input clk, rst;
 	input [6:0] opcode;
@@ -177,7 +178,7 @@ module controller(clk, rst, opcode, funct,
 	
 	output [3:0] memory_op;
 	output [3:0] alu_op;
-	output [2:0] lu_op;
+	output [2:0] cmp_op;
 	output r1_pc_sel, r2_imm_sel;
 	output pc_load, pc_in_sel;
 	// output [31:0] pc_in;
@@ -187,7 +188,7 @@ module controller(clk, rst, opcode, funct,
 
 	reg [3:0] memory_op = 0;
 	reg [3:0] alu_op;
-	reg [2:0] lu_op;
+	reg [2:0] cmp_op;
 	reg r1_pc_sel, r2_imm_sel;
 	// pc_load 默认为 1
 	reg pc_load = 1;
@@ -205,9 +206,9 @@ module controller(clk, rst, opcode, funct,
 		pc_load = 0;
 		rf_write = 0;
 		pc_load = 1;
-		// 设置lu_op保证在非逻辑操作下，lu输出始终为1，
-		// 避免其他操作需要以au_out作为地址跳转时，选择器出错
-		lu_op = `LU_DONOTHING;
+		// 设置cmp_op保证在非逻辑操作下，cmp输出始终为1，
+		// 避免其他操作需要以cmp_out作为地址跳转时，选择器出错
+		cmp_op = `CMP_DONOTHING;
 		// 默认pc输入为pc+4
 		pc_in_sel = `PC_IN_PC_4;
 		
@@ -215,7 +216,7 @@ module controller(clk, rst, opcode, funct,
 		begin
 			memory_op = 0;
 			alu_op = 0;
-			lu_op = 0;
+			cmp_op = 0;
 			r1_pc_sel = 0;
 			r2_imm_sel = 0;
 			pc_load = 1;
@@ -287,7 +288,7 @@ module controller(clk, rst, opcode, funct,
 					r1_pc_sel = 1;
 					r2_imm_sel = 1;
 					// lu进行比较，输出是否跳转的控制信号
-					lu_op = funct[2:0];
+					cmp_op = funct[2:0];
 
 					// 这里由一个硬件复用器实现
 					// lu_out = 1: pc = au_out
@@ -361,7 +362,7 @@ endmodule</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>memory_op:4,alu_op:4,lu_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
+          <string>memory_op:4,alu_op:4,cmp_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
         </entry>
       </elementAttributes>
       <pos x="480" y="220"/>
@@ -477,7 +478,7 @@ endmodule</string>
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>lu-op</string>
+          <string>cmp-op</string>
         </entry>
         <entry>
           <string>Bits</string>
