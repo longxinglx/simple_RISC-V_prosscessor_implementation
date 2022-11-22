@@ -133,17 +133,17 @@
 
 // alu_op
 // 算术运算
-// AU_opcode = inst[30|14:12] = funct[8|2:0]
-`define AU_ADD 4&apos;b0000
-`define AU_SUB 4&apos;b1000
-`define AU_SLL 4&apos;b0001
-`define AU_SLT 4&apos;b0010
-`define AU_SLTU 4&apos;b0011
-`define AU_XOR 4&apos;b0100
-`define AU_SRL 4&apos;b0101
-`define AU_SRA 4&apos;b1101
-`define AU_OR 4&apos;b0110
-`define AU_AND 4&apos;b0111
+// ALU_opcode = inst[30|14:12] = funct[8|2:0]
+`define ALU_ADD 4&apos;b0000
+`define ALU_SUB 4&apos;b1000
+`define ALU_SLL 4&apos;b0001
+`define ALU_SLT 4&apos;b0010
+`define ALU_SLTU 4&apos;b0011
+`define ALU_XOR 4&apos;b0100
+`define ALU_SRL 4&apos;b0101
+`define ALU_SRA 4&apos;b1101
+`define ALU_OR 4&apos;b0110
+`define ALU_AND 4&apos;b0111
 // 逻辑运算
 // LU_opcode = inst[14:12] = funct[2:0]
 `define LU_BEQ 3&apos;b000
@@ -166,7 +166,7 @@
 `define SW 4&apos;b1010
 
 module controller(clk, rst, opcode, funct,
-	memory_op, au_op, lu_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
+	memory_op, alu_op, lu_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
 	rf_write, rf_in_sel);
 	input clk, rst;
 	input [6:0] opcode;
@@ -176,7 +176,7 @@ module controller(clk, rst, opcode, funct,
 	// input [31:0] alu_out;
 	
 	output [3:0] memory_op;
-	output [3:0] au_op;
+	output [3:0] alu_op;
 	output [2:0] lu_op;
 	output r1_pc_sel, r2_imm_sel;
 	output pc_load, pc_in_sel;
@@ -186,7 +186,7 @@ module controller(clk, rst, opcode, funct,
 	// output [31:0] rf_din;
 
 	reg [3:0] memory_op = 0;
-	reg [3:0] au_op;
+	reg [3:0] alu_op;
 	reg [2:0] lu_op;
 	reg r1_pc_sel, r2_imm_sel;
 	// pc_load 默认为 1
@@ -214,7 +214,7 @@ module controller(clk, rst, opcode, funct,
 		if (rst)
 		begin
 			memory_op = 0;
-			au_op = 0;
+			alu_op = 0;
 			lu_op = 0;
 			r1_pc_sel = 0;
 			r2_imm_sel = 0;
@@ -232,7 +232,7 @@ module controller(clk, rst, opcode, funct,
 				// LUI将符号位扩展的立即数放到目标寄存器rd的高20位，将rd的低12位填0。
 				begin
 					// 令alu，进行imm+0
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
 					rf_write = 1;
@@ -244,7 +244,7 @@ module controller(clk, rst, opcode, funct,
 				// 将其低12位填0，然后将这个偏移量加到pc上，
 				// 最后将结果写入寄存器rd。
 				begin
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 1;
 					r2_imm_sel = 1;
 					
@@ -255,7 +255,7 @@ module controller(clk, rst, opcode, funct,
 				// JAL将偏移量（立即数）符号扩展，加到pc上，形成跳转目标地址，
 				// JAL将跳转指令后面指令的地址（pc+4）保存到寄存器rd中。
 				begin
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 1;
 					r2_imm_sel = 1;
 					pc_in_sel = `PC_IN_AU;
@@ -271,7 +271,7 @@ module controller(clk, rst, opcode, funct,
 				// 跳转指令后面指令的地址（pc+4） 保存到寄存器rd中。
 				begin
 					// 最低位置零操作放在模块pc中
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
 					pc_in_sel = `PC_IN_AU;
@@ -283,7 +283,7 @@ module controller(clk, rst, opcode, funct,
 				`LOGIC:
 				begin
 					// au计算跳转地址
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 1;
 					r2_imm_sel = 1;
 					// lu进行比较，输出是否跳转的控制信号
@@ -303,7 +303,7 @@ module controller(clk, rst, opcode, funct,
 					memory_op[3] = opcode[5];
 					
 					// 使用au计算address
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
 					
@@ -319,7 +319,7 @@ module controller(clk, rst, opcode, funct,
 					memory_op[3] = opcode[5];
 					
 					// 使用au计算address
-					au_op = `AU_ADD;
+					alu_op = `ALU_ADD;
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
 
@@ -337,8 +337,8 @@ module controller(clk, rst, opcode, funct,
 
 					//设置ALU_opcode
 					// alu_op = funct[8|2:0]
-					au_op[2:0] = funct[2:0];
-					au_op[3] = funct[8];
+					alu_op[2:0] = funct[2:0];
+					alu_op[3] = funct[8];
 				end
 				`ARITHMETIC:
 				begin
@@ -351,8 +351,8 @@ module controller(clk, rst, opcode, funct,
 					rf_in_sel = `RF_IN_AU;
 					
 					//设置ALU_opcode
-					au_op[2:0] = funct[2:0];
-					au_op[3] = funct[8];
+					alu_op[2:0] = funct[2:0];
+					alu_op[3] = funct[8];
 				end
 			endcase
 		end
@@ -361,7 +361,7 @@ endmodule</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>memory_op:4,au_op:4,lu_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
+          <string>memory_op:4,alu_op:4,lu_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
         </entry>
       </elementAttributes>
       <pos x="480" y="220"/>
@@ -403,11 +403,11 @@ endmodule</string>
       <elementAttributes>
         <entry>
           <string>Description</string>
-          <string>au控制信号</string>
+          <string>alu控制信号</string>
         </entry>
         <entry>
           <string>Label</string>
-          <string>au-op</string>
+          <string>alu-op</string>
         </entry>
         <entry>
           <string>Bits</string>

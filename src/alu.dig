@@ -3,16 +3,16 @@
   <version>1</version>
   <attributes>
     <entry>
-      <string>Label</string>
-      <string>au</string>
-    </entry>
-    <entry>
       <string>shapeType</string>
       <shapeType>LAYOUT</shapeType>
     </entry>
     <entry>
       <string>Description</string>
-      <string>算术运算单元</string>
+      <string>算术逻辑运算单元</string>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>alu</string>
     </entry>
     <entry>
       <string>Width</string>
@@ -83,7 +83,7 @@
         </entry>
         <entry>
           <string>Label</string>
-          <string>au</string>
+          <string>alu</string>
         </entry>
         <entry>
           <string>externalInputs</string>
@@ -96,21 +96,21 @@
         <entry>
           <string>Code</string>
           <string>// addi, xori, slli，等立即数操作，由控制器来控制输入AU的是寄存器数据还是立即数，
-// AU只负责计算in1和in2
+// ALU只负责计算in1和in2
 
-// AU_arithmetic_opcode = inst[30|14:12]
+// ALU_arithmetic_opcode = inst[30|14:12]
 
 // 算术运算
-`define AU_ADD 4&apos;b0000
-`define AU_SUB 4&apos;b1000
-`define AU_SLL 4&apos;b0001
-`define AU_SLT 4&apos;b0010
-`define AU_SLTU 4&apos;b0011
-`define AU_XOR 4&apos;b0100
-`define AU_SRL 4&apos;b0101
-`define AU_SRA 4&apos;b1101
-`define AU_OR 4&apos;b0110
-`define AU_AND 4&apos;b0111
+`define ALU_ADD 4&apos;b0000
+`define ALU_SUB 4&apos;b1000
+`define ALU_SLL 4&apos;b0001
+`define ALU_SLT 4&apos;b0010
+`define ALU_SLTU 4&apos;b0011
+`define ALU_XOR 4&apos;b0100
+`define ALU_SRL 4&apos;b0101
+`define ALU_SRA 4&apos;b1101
+`define ALU_OR 4&apos;b0110
+`define ALU_AND 4&apos;b0111
 /*
 // 逻辑运算现放入lu模块进行
 // 逻辑运算
@@ -124,7 +124,7 @@
 `define ALU_BGEU 4&apos;b1111
 */
 
-module au(op, in1, in2, out);
+module alu(op, in1, in2, out);
 	input [3:0] op;
 	input [31:0] in1, in2;
 	output [31:0] out;
@@ -136,30 +136,30 @@ module au(op, in1, in2, out);
 	begin
 		case(op)
 			// 算术运算
-			`AU_ADD: out = in1 + in2;
-			`AU_SUB: out = in1 - in2;
+			`ALU_ADD: out = in1 + in2;
+			`ALU_SUB: out = in1 - in2;
 			// 逻辑左移
 			// 移位操作数是无符号数，且只取低5位作为有效数
-			`AU_SLL: out = in1 &lt;&lt; in2[4:0];
-			`AU_SLT: 
+			`ALU_SLL: out = in1 &lt;&lt; in2[4:0];
+			`ALU_SLT: 
 				if($signed(in1) &lt; $signed(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`AU_SLTU:
+			`ALU_SLTU:
 				if($unsigned(in1) &lt; $unsigned(in2)) 
 					out = 1; 
 				else
 					out = 0;
-			`AU_XOR: out = in1 ^ in2;
+			`ALU_XOR: out = in1 ^ in2;
 			// 逻辑右移
-			`AU_SRL: out = in1 &gt;&gt; in2[4:0];
+			`ALU_SRL: out = in1 &gt;&gt; in2[4:0];
 			// 算术右移
 			// 这里取低5位作为有效数，
 			// 也有效的避免了srai操作中imm中第十位为1造成的影响
-			`AU_SRA: out = $signed(in1) &gt;&gt;&gt; in2[4:0];
-			`AU_OR: out = in1 | in2;
-			`AU_AND: out = in1 &amp; in2;
+			`ALU_SRA: out = $signed(in1) &gt;&gt;&gt; in2[4:0];
+			`ALU_OR: out = in1 | in2;
+			`ALU_AND: out = in1 &amp; in2;
 			default: out = 0;
 		endcase
 	end
