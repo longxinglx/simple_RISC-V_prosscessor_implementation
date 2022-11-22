@@ -164,8 +164,8 @@
 `define R 7&apos;b0110011
 // jalr
 `define I_J 7&apos;b1100111
-// I_register
-`define I_R 7&apos;b0000011
+// I_memory
+`define I_M 7&apos;b0000011
 // I_arithmetic
 `define I_A 7&apos;b0010011
 `define S 7&apos;b0100011
@@ -229,7 +229,7 @@ module decode(inst, opcode, rd, funct, rs1, rs2, imm);
 		begin
 			funct[9:3] = inst[31:25];
 		end
-		else if (opcode == `I_J || opcode == `I_R || opcode == `I_A)
+		else if (opcode == `I_J || opcode == `I_M || opcode == `I_A)
 		begin
 			rs2 = 0;
 			if (funct[2:0] == 3&apos;b001 || funct[2:0] == 3&apos;b101)

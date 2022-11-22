@@ -116,18 +116,18 @@
 `define AUIPC 7&apos;b0010111
 `define JAL 7&apos;b1101111
 `define JALR 7&apos;b1100111
-`define LOGIC 7&apos;b1100011
+`define COMPARE 7&apos;b1100011
 `define LOAD 7&apos;b0000011
 `define STORE 7&apos;b0100011
-`define ARITHMETIC_IMM 7&apos;b0010011
-`define ARITHMETIC 7&apos;b0110011
+`define AL_IMM 7&apos;b0010011
+`define AL 7&apos;b0110011
 
 // pc_in_sel
 `define PC_IN_PC_4 0		// PC+4
-`define PC_IN_AU 1		// 包括jal, jalr
+`define PC_IN_ALU 1		// 包括jal, jalr
 
 // rf_in_sel
-`define RF_IN_AU 0		// 包括算术逻辑操作结果、lui、auipc
+`define RF_IN_ALU 0		// 包括算术逻辑操作结果、lui、auipc
 `define RF_IN_MEMORY 1
 `define RF_IN_PC_4 2
 
@@ -223,7 +223,7 @@ module controller(clk, rst, opcode, funct,
 			pc_in_sel = `PC_IN_PC_4;
 			// pc_in = 0;
 			rf_write = 0;
-			rf_in_sel = `RF_IN_AU;
+			rf_in_sel = `RF_IN_ALU;
 			// rf_din = 0;
 		end
 		else
@@ -237,7 +237,7 @@ module controller(clk, rst, opcode, funct,
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
 					rf_write = 1;
-					rf_in_sel = `RF_IN_AU;
+					rf_in_sel = `RF_IN_ALU;
 					
 				end
 				`AUIPC:
@@ -250,7 +250,7 @@ module controller(clk, rst, opcode, funct,
 					r2_imm_sel = 1;
 					
 					rf_write = 1;
-					rf_in_sel = `RF_IN_AU;
+					rf_in_sel = `RF_IN_ALU;
 				end
 				`JAL:
 				// JAL将偏移量（立即数）符号扩展，加到pc上，形成跳转目标地址，
@@ -259,7 +259,7 @@ module controller(clk, rst, opcode, funct,
 					alu_op = `ALU_ADD;
 					r1_pc_sel = 1;
 					r2_imm_sel = 1;
-					pc_in_sel = `PC_IN_AU;
+					pc_in_sel = `PC_IN_ALU;
 					
 					rf_write = 1;
 					// 选择pc+4存入寄存器
@@ -275,13 +275,13 @@ module controller(clk, rst, opcode, funct,
 					alu_op = `ALU_ADD;
 					r1_pc_sel = 0;
 					r2_imm_sel = 1;
-					pc_in_sel = `PC_IN_AU;
+					pc_in_sel = `PC_IN_ALU;
 					
 					rf_write = 1;
 					// 选择pc+4存入寄存器
 					rf_in_sel = `RF_IN_PC_4;
 				end
-				`LOGIC:
+				`COMPARE:
 				begin
 					// au计算跳转地址
 					alu_op = `ALU_ADD;
@@ -293,7 +293,7 @@ module controller(clk, rst, opcode, funct,
 					// 这里由一个硬件复用器实现
 					// lu_out = 1: pc = au_out
 					// lu_out = 0: pc = pc+4
-					pc_in_sel = `PC_IN_AU;
+					pc_in_sel = `PC_IN_ALU;
 				end
 				// load, store:有效字节地址是通过将r1与imm相加而获得的
 				`LOAD:
@@ -326,7 +326,7 @@ module controller(clk, rst, opcode, funct,
 
 					
 				end
-				`ARITHMETIC_IMM:
+				`AL_IMM:
 				begin
 					r1_pc_sel = 0;
 					// 以立即数作为au第2个输入
@@ -334,14 +334,14 @@ module controller(clk, rst, opcode, funct,
 
 					// 将AU_out写入rf
 					rf_write = 1;
-					rf_in_sel = `RF_IN_AU;
+					rf_in_sel = `RF_IN_ALU;
 
 					//设置ALU_opcode
 					// alu_op = funct[8|2:0]
 					alu_op[2:0] = funct[2:0];
 					alu_op[3] = funct[8];
 				end
-				`ARITHMETIC:
+				`AL:
 				begin
 					// 以r1, r2作为au输入
 					r1_pc_sel = 0;
@@ -349,7 +349,7 @@ module controller(clk, rst, opcode, funct,
 	
 					// 将AU_out写入rf
 					rf_write = 1;
-					rf_in_sel = `RF_IN_AU;
+					rf_in_sel = `RF_IN_ALU;
 					
 					//设置ALU_opcode
 					alu_op[2:0] = funct[2:0];
