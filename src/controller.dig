@@ -203,7 +203,6 @@ module controller(clk, rst, opcode, funct,
 	begin
 		// 每一个时钟周期，都对那些会修改存储的控制信号进行初始化
 		memory_op = 0;
-		pc_load = 0;
 		rf_write = 0;
 		pc_load = 1;
 		// 设置cmp_op保证在非逻辑操作下，cmp输出始终为1，

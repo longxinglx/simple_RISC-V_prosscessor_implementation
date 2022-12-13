@@ -441,7 +441,8 @@
 	reg [31:0] imm_out;
 	reg [3:0] memory_op_out, alu_op_out;
 	reg [2:0] cmp_op_out;
-	reg r1_pc_sel_out, r2_imm_sel_out, pc_load_out, pc_in_sel_out, rf_write_out;
+	// pc_load_out 初始值设为1，使得流水线刚启动时能顺利运行下去
+	reg r1_pc_sel_out, r2_imm_sel_out, pc_load_out = 1, pc_in_sel_out, rf_write_out;
 	reg [1:0] rf_in_sel_out;	
 	
 	always @(posedge clk)
