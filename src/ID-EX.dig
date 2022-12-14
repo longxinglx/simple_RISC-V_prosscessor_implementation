@@ -405,7 +405,7 @@
         </entry>
         <entry>
           <string>externalInputs</string>
-          <string>clk,rst,pc:32,r1:32,r2:32,rd:5,imm:32,memory_op:4,alu_op:4,cmp_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
+          <string>clk,rst,pc:32,r1:32,r2:32,rd:5,imm:32,memory_op:4,alu_op:4,cmp_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2,rs1:5,rs2:5</string>
         </entry>
         <entry>
           <string>Width</string>
@@ -414,10 +414,10 @@
         <entry>
           <string>Code</string>
           <string>module ID_EX(clk,rst,pc,r1,r2,rd,imm,memory_op,alu_op,cmp_op,r1_pc_sel, 
-	r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel,
+	r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel, rs1, rs2, 
 	pc_out,r1_out,r2_out,rd_out,imm_out,memory_op_out,alu_op_out,cmp_op_out,
 	r1_pc_sel_out,r2_imm_sel_out,pc_load_out,pc_in_sel_out,rf_write_out,
-	rf_in_sel_out);
+	rf_in_sel_out, rs1_out, rs2_out);
 
 	input clk, rst;
 	input [31:0] pc, r1, r2;
@@ -426,7 +426,8 @@
 	input [3:0] memory_op, alu_op;
 	input [2:0] cmp_op;
 	input r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, rf_write;
-	input [1:0] rf_in_sel;	
+	input [1:0] rf_in_sel;
+	input [4:0] rs1, rs2;
 
 	output [31:0] pc_out, r1_out, r2_out;
 	output [4:0] rd_out;
@@ -434,7 +435,8 @@
 	output [3:0] memory_op_out, alu_op_out;
 	output [2:0] cmp_op_out;
 	output r1_pc_sel_out, r2_imm_sel_out, pc_load_out, pc_in_sel_out, rf_write_out;
-	output [1:0] rf_in_sel_out;	
+	output [1:0] rf_in_sel_out;
+	output [4:0] rs1_out, rs2_out;
 	
 	reg [31:0] pc_out, r1_out, r2_out;
 	reg [4:0] rd_out;
@@ -443,7 +445,8 @@
 	reg [2:0] cmp_op_out;
 	// pc_load_out 初始值设为1，使得流水线刚启动时能顺利运行下去
 	reg r1_pc_sel_out, r2_imm_sel_out, pc_load_out = 1, pc_in_sel_out, rf_write_out;
-	reg [1:0] rf_in_sel_out;	
+	reg [1:0] rf_in_sel_out;
+	reg [4:0] rs1_out, rs2_out;
 	
 	always @(posedge clk)
 	begin
@@ -462,7 +465,9 @@
 			pc_load_out = 0;
 			pc_in_sel_out = 0;
 			rf_write_out = 0;
-			rf_in_sel_out = 0;	
+			rf_in_sel_out = 0;
+			rs1_out = 0;
+			rs2_out = 0;
 		end
 		else
 		begin
@@ -480,13 +485,15 @@
 			pc_in_sel_out = pc_in_sel;
 			rf_write_out = rf_write;
 			rf_in_sel_out = rf_in_sel;
+			rs1_out = rs1;
+			rs2_out = rs2;
 		end
 	end
 endmodule</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>pc_out:32,r1_out:32,r2_out:32,rd_out:5,imm_out:32,memory_op_out:4,alu_op_out:4,cmp_op_out:3,r1_pc_sel_out,r2_imm_sel_out,pc_load_out,pc_in_sel_out,rf_write_out,rf_in_sel_out:2</string>
+          <string>pc_out:32,r1_out:32,r2_out:32,rd_out:5,imm_out:32,memory_op_out:4,alu_op_out:4,cmp_op_out:3,r1_pc_sel_out,r2_imm_sel_out,pc_load_out,pc_in_sel_out,rf_write_out,rf_in_sel_out:2,rs1_out:5,rs2_out:5</string>
         </entry>
       </elementAttributes>
       <pos x="680" y="180"/>
@@ -518,6 +525,62 @@ endmodule</string>
         </entry>
       </elementAttributes>
       <pos x="1280" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="1140"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs2</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="280" y="1200"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs1_out</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="1020"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rs2_out</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="1080"/>
     </visualElement>
   </visualElements>
   <wires>
@@ -570,6 +633,10 @@ endmodule</string>
       <p2 x="1280" y="840"/>
     </wire>
     <wire>
+      <p1 x="620" y="520"/>
+      <p2 x="680" y="520"/>
+    </wire>
+    <wire>
       <p1 x="280" y="780"/>
       <p2 x="480" y="780"/>
     </wire>
@@ -580,6 +647,10 @@ endmodule</string>
     <wire>
       <p1 x="560" y="460"/>
       <p2 x="680" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="960" y="460"/>
+      <p2 x="1000" y="460"/>
     </wire>
     <wire>
       <p1 x="280" y="720"/>
@@ -658,6 +729,10 @@ endmodule</string>
       <p2 x="380" y="480"/>
     </wire>
     <wire>
+      <p1 x="960" y="480"/>
+      <p2 x="980" y="480"/>
+    </wire>
+    <wire>
       <p1 x="960" y="420"/>
       <p2 x="1040" y="420"/>
     </wire>
@@ -722,12 +797,24 @@ endmodule</string>
       <p2 x="1220" y="240"/>
     </wire>
     <wire>
+      <p1 x="280" y="1200"/>
+      <p2 x="620" y="1200"/>
+    </wire>
+    <wire>
       <p1 x="960" y="180"/>
       <p2 x="1280" y="180"/>
     </wire>
     <wire>
       <p1 x="280" y="180"/>
       <p2 x="680" y="180"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="1140"/>
+      <p2 x="600" y="1140"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="500"/>
+      <p2 x="680" y="500"/>
     </wire>
     <wire>
       <p1 x="960" y="440"/>
@@ -742,6 +829,10 @@ endmodule</string>
       <p2 x="580" y="1080"/>
     </wire>
     <wire>
+      <p1 x="980" y="1080"/>
+      <p2 x="1280" y="1080"/>
+    </wire>
+    <wire>
       <p1 x="960" y="380"/>
       <p2 x="1080" y="380"/>
     </wire>
@@ -752,6 +843,10 @@ endmodule</string>
     <wire>
       <p1 x="280" y="1020"/>
       <p2 x="560" y="1020"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1020"/>
+      <p2 x="1280" y="1020"/>
     </wire>
     <wire>
       <p1 x="320" y="220"/>
@@ -794,8 +889,16 @@ endmodule</string>
       <p2 x="340" y="360"/>
     </wire>
     <wire>
+      <p1 x="980" y="480"/>
+      <p2 x="980" y="1080"/>
+    </wire>
+    <wire>
       <p1 x="1240" y="220"/>
       <p2 x="1240" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="500"/>
+      <p2 x="600" y="1140"/>
     </wire>
     <wire>
       <p1 x="540" y="440"/>
@@ -826,12 +929,20 @@ endmodule</string>
       <p2 x="360" y="420"/>
     </wire>
     <wire>
+      <p1 x="1000" y="460"/>
+      <p2 x="1000" y="1020"/>
+    </wire>
+    <wire>
       <p1 x="300" y="200"/>
       <p2 x="300" y="240"/>
     </wire>
     <wire>
       <p1 x="1260" y="200"/>
       <p2 x="1260" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="620" y="520"/>
+      <p2 x="620" y="1200"/>
     </wire>
     <wire>
       <p1 x="1200" y="260"/>

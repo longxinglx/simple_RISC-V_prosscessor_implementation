@@ -3,12 +3,12 @@
   <version>1</version>
   <attributes>
     <entry>
-      <string>Label</string>
-      <string>forwarding unit</string>
-    </entry>
-    <entry>
       <string>shapeType</string>
       <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>forwarding unit</string>
     </entry>
     <entry>
       <string>Width</string>
@@ -25,7 +25,7 @@
         </entry>
         <entry>
           <string>Bits</string>
-          <int>32</int>
+          <int>5</int>
         </entry>
       </elementAttributes>
       <pos x="240" y="140"/>
@@ -39,7 +39,7 @@
         </entry>
         <entry>
           <string>Bits</string>
-          <int>32</int>
+          <int>5</int>
         </entry>
       </elementAttributes>
       <pos x="240" y="200"/>
@@ -52,7 +52,7 @@
           <string>write_EXMEM</string>
         </entry>
       </elementAttributes>
-      <pos x="240" y="260"/>
+      <pos x="240" y="320"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -66,7 +66,7 @@
           <int>5</int>
         </entry>
       </elementAttributes>
-      <pos x="240" y="320"/>
+      <pos x="240" y="260"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -76,7 +76,7 @@
           <string>write_MEMWB</string>
         </entry>
       </elementAttributes>
-      <pos x="240" y="380"/>
+      <pos x="240" y="440"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -90,7 +90,7 @@
           <int>5</int>
         </entry>
       </elementAttributes>
-      <pos x="240" y="440"/>
+      <pos x="240" y="380"/>
     </visualElement>
     <visualElement>
       <elementName>Out</elementName>
@@ -100,12 +100,12 @@
           <string>forward_A</string>
         </entry>
         <entry>
-          <string>intFormat</string>
-          <intFormat>bin</intFormat>
-        </entry>
-        <entry>
           <string>Bits</string>
           <int>2</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
         </entry>
       </elementAttributes>
       <pos x="860" y="140"/>
@@ -118,12 +118,12 @@
           <string>forward_B</string>
         </entry>
         <entry>
-          <string>intFormat</string>
-          <intFormat>bin</intFormat>
-        </entry>
-        <entry>
           <string>Bits</string>
           <int>2</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
         </entry>
       </elementAttributes>
       <pos x="860" y="200"/>
@@ -132,16 +132,16 @@
       <elementName>External</elementName>
       <elementAttributes>
         <entry>
-          <string>Label</string>
-          <string>forwarding_unit</string>
-        </entry>
-        <entry>
           <string>applicationType</string>
           <appType>IVERILOG</appType>
         </entry>
         <entry>
+          <string>Label</string>
+          <string>forwarding_unit</string>
+        </entry>
+        <entry>
           <string>externalInputs</string>
-          <string>rs1_IDEX:32,rs2_IDEX:32,write_EXMEM,rd_EXMEM:5,write_MEMWB,rd_MEMWB:5</string>
+          <string>rs1_IDEX:5,rs2_IDEX:5,rd_EXMEM:5,write_EXMEM,rd_MEMWB:5,write_MEMWB</string>
         </entry>
         <entry>
           <string>Width</string>
@@ -149,15 +149,14 @@
         </entry>
         <entry>
           <string>Code</string>
-          <string>module forwarding_unit(rs1_IDEX, rs2_IDEX, write_EXMEM, rd_EXMEM, 
-	write_MEMWB, rd_MEMWB,
+          <string>module forwarding_unit(rs1_IDEX, rs2_IDEX, rd_EXMEM, write_EXMEM,
+	rd_MEMWB, write_MEMWB,
 	forward_A, forward_B);
 	
-	input [31:0] rs1_IDEX, rs2_IDEX;
+	input [4:0] rs1_IDEX, rs2_IDEX, rd_EXMEM; 
 	input write_EXMEM;
-	input [4:0] rd_EXMEM; 
-	input write_MEMWB;
 	input [4:0] rd_MEMWB;
+	input write_MEMWB;
 	output [1:0] forward_A, forward_B;
 	
 	assign forward_A = (write_EXMEM &amp;&amp; rd_EXMEM != 0 &amp;&amp; rd_EXMEM == rs1_IDEX) ? 10 :
