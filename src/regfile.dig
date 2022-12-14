@@ -159,8 +159,11 @@
 	reg [31:0] r[1:31];
 
 	// 寄存器0号元素永远为0
-	assign r1 = (rs1 == 0)? 0: r[rs1];
-	assign r2 = (rs2 == 0)? 0: r[rs2];
+	// assign r1 = (rs1 == 0)? 0: r[rs1];
+	// assign r2 = (rs2 == 0)? 0: r[rs2];
+	// 若要读的位置和当前要写的位置相同，则输出要写入的数，实现写先于读
+	assign r1 = (rs1 == 0)? 0: (rs1 == rd &amp;&amp; write == 1)? din: r[rs1];
+	assign r2 = (rs2 == 0)? 0: (rs2 == rd &amp;&amp; write == 1)? din: r[rs2];
 
 	integer i;
 
