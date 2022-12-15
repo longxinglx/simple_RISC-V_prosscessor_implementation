@@ -111,14 +111,18 @@
 	always @(posedge clk)
 	begin
 		if(rst)
+		begin
 			d = 0;
+		end
 		else if(load)
+		begin
 			// JALR命令中，将12位有符号立即数加上rs1，
 			// 然后将结果的最低位设置为0，作为目标地址。
 			// 又因为指令地址都为4的倍数，最后一位都为0，
 			// 所以直接将所有指令地址最后一位都置为0
 			d[0] = d[0];
 			d[31:1] = din[31:1];
+		end
 	end
 endmodule</string>
         </entry>
