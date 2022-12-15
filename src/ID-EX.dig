@@ -413,7 +413,10 @@
         </entry>
         <entry>
           <string>Code</string>
-          <string>module ID_EX(clk,rst,pc,r1,r2,rd,imm,memory_op,alu_op,cmp_op,r1_pc_sel, 
+          <string>`define MEM_NOP 4&apos;b1111
+`define CMP_NOP 3&apos;b010
+
+module ID_EX(clk,rst,pc,r1,r2,rd,imm,memory_op,alu_op,cmp_op,r1_pc_sel, 
 	r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel, rs1, rs2, 
 	pc_out,r1_out,r2_out,rd_out,imm_out,memory_op_out,alu_op_out,cmp_op_out,
 	r1_pc_sel_out,r2_imm_sel_out,pc_load_out,pc_in_sel_out,rf_write_out,
@@ -441,8 +444,8 @@
 	reg [31:0] pc_out, r1_out, r2_out;
 	reg [4:0] rd_out;
 	reg [31:0] imm_out;
-	reg [3:0] memory_op_out, alu_op_out;
-	reg [2:0] cmp_op_out;
+	reg [3:0] memory_op_out = `MEM_NOP, alu_op_out;
+	reg [2:0] cmp_op_out = `CMP_NOP;
 	// pc_load_out 初始值设为1，使得流水线刚启动时能顺利运行下去
 	reg r1_pc_sel_out, r2_imm_sel_out, pc_load_out = 1, pc_in_sel_out, rf_write_out;
 	reg [1:0] rf_in_sel_out;
@@ -457,9 +460,9 @@
 			r2_out = 0;
 			rd_out = 0;
 			imm_out = 0;
-			memory_op_out = 0;
+			memory_op_out = `MEM_NOP;
 			alu_op_out = 0;
-			cmp_op_out = 0;
+			cmp_op_out = `CMP_NOP;
 			r1_pc_sel_out = 0;
 			r2_imm_sel_out = 0;
 			pc_load_out = 0;

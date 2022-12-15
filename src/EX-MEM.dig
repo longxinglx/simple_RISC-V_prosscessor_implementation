@@ -241,7 +241,9 @@
         </entry>
         <entry>
           <string>Code</string>
-          <string>module EX_MEM(clk,rst,cmp_result,alu_result,memory_op,r2,rd,rf_write,
+          <string>`define MEM_NOP 4&apos;b1111
+
+module EX_MEM(clk,rst,cmp_result,alu_result,memory_op,r2,rd,rf_write,
 	rf_in_sel,pc,pc_load,pc_in_sel,
 	cmp_result_out,alu_result_out,memory_op_out,r2_out,rd_out,rf_write_out,
 	rf_in_sel_out,pc_out,pc_load_out,pc_in_sel_out);
@@ -269,7 +271,7 @@
 	// cmp_result_out 初始值设置为1
 	reg cmp_result_out = 1;
 	reg [31:0] alu_result_out;
-	reg [3:0] memory_op_out;
+	reg [3:0] memory_op_out = `MEM_NOP;
 	reg [31:0] r2_out;
 	reg [4:0] rd_out;  
 	reg rf_write_out;
@@ -284,7 +286,7 @@
 		begin
 			cmp_result_out = 0;
 			alu_result_out = 0;
-			memory_op_out = 0;
+			memory_op_out = `MEM_NOP;
 			r2_out = 0;
 			rd_out = 0; 
 			rf_write_out = 0;
