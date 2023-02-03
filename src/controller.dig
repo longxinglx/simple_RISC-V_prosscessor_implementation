@@ -36,7 +36,7 @@
           <int>2</int>
         </entry>
       </elementAttributes>
-      <pos x="960" y="700"/>
+      <pos x="960" y="640"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -153,7 +153,7 @@
 `define CMP_BGE 3&apos;b101
 `define CMP_BLTU 3&apos;b110
 `define CMP_BGEU 3&apos;b111
-`define CMP_DONOTHING 3&apos;b010
+`define CMP_NOP 3&apos;b010
 
 // memory_op
 // memory_op = inst[6|14:12] = opcode[6] + funct[2:0]
@@ -165,9 +165,10 @@
 `define SB 4&apos;b1000
 `define SH 4&apos;b1001
 `define SW 4&apos;b1010
+`define MEM_NOP 4&apos;b1111
 
 module controller(clk, rst, opcode, funct,
-	memory_op, alu_op, cmp_op, r1_pc_sel, r2_imm_sel, pc_load, pc_in_sel, 
+	memory_op, alu_op, cmp_op, r1_pc_sel, r2_imm_sel, pc_in_sel, 
 	rf_write, rf_in_sel);
 	input clk, rst;
 	input [6:0] opcode;
@@ -180,7 +181,7 @@ module controller(clk, rst, opcode, funct,
 	output [3:0] alu_op;
 	output [2:0] cmp_op;
 	output r1_pc_sel, r2_imm_sel;
-	output pc_load, pc_in_sel;
+	output pc_in_sel;
 	// output [31:0] pc_in;
 	output rf_write;
 	output [1:0] rf_in_sel;
@@ -190,8 +191,6 @@ module controller(clk, rst, opcode, funct,
 	reg [3:0] alu_op;
 	reg [2:0] cmp_op;
 	reg r1_pc_sel, r2_imm_sel;
-	// pc_load 默认为 1
-	reg pc_load = 1;
 	reg pc_in_sel;
 	// reg [31:0] pc_in;
 	reg rf_write;
@@ -202,23 +201,21 @@ module controller(clk, rst, opcode, funct,
 	always @(opcode, funct)
 	begin
 		// 每一个时钟周期，都对那些会修改存储的控制信号进行初始化
-		memory_op = 0;
+		memory_op = `MEM_NOP;
 		rf_write = 0;
-		pc_load = 1;
 		// 设置cmp_op保证在非逻辑操作下，cmp输出始终为1，
 		// 避免其他操作需要以cmp_out作为地址跳转时，选择器出错
-		cmp_op = `CMP_DONOTHING;
+		cmp_op = `CMP_NOP;
 		// 默认pc输入为pc+4
 		pc_in_sel = `PC_IN_PC_4;
 		
 		if (rst)
 		begin
-			memory_op = 0;
+			memory_op = `MEM_NOP;
 			alu_op = 0;
-			cmp_op = 0;
+			cmp_op = `CMP_NOP;
 			r1_pc_sel = 0;
 			r2_imm_sel = 0;
-			pc_load = 1;
 			pc_in_sel = `PC_IN_PC_4;
 			// pc_in = 0;
 			rf_write = 0;
@@ -361,7 +358,7 @@ endmodule</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>memory_op:4,alu_op:4,cmp_op:3,r1_pc_sel,r2_imm_sel,pc_load,pc_in_sel,rf_write,rf_in_sel:2</string>
+          <string>memory_op:4,alu_op:4,cmp_op:3,r1_pc_sel,r2_imm_sel,pc_in_sel,rf_write,rf_in_sel:2</string>
         </entry>
       </elementAttributes>
       <pos x="480" y="220"/>
@@ -378,7 +375,7 @@ endmodule</string>
           <string>pc-in-sel</string>
         </entry>
       </elementAttributes>
-      <pos x="960" y="580"/>
+      <pos x="960" y="520"/>
     </visualElement>
     <visualElement>
       <elementName>Out</elementName>
@@ -439,20 +436,6 @@ endmodule</string>
       <elementAttributes>
         <entry>
           <string>Description</string>
-          <string>pc是否要加载下一条指令的控制信号</string>
-        </entry>
-        <entry>
-          <string>Label</string>
-          <string>pc-load</string>
-        </entry>
-      </elementAttributes>
-      <pos x="960" y="520"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Description</string>
           <string>rf 写 控制信号</string>
         </entry>
         <entry>
@@ -460,7 +443,7 @@ endmodule</string>
           <string>rf-write</string>
         </entry>
       </elementAttributes>
-      <pos x="960" y="640"/>
+      <pos x="960" y="580"/>
     </visualElement>
     <visualElement>
       <elementName>Out</elementName>
@@ -497,6 +480,10 @@ endmodule</string>
       <p2 x="960" y="640"/>
     </wire>
     <wire>
+      <p1 x="840" y="580"/>
+      <p2 x="960" y="580"/>
+    </wire>
+    <wire>
       <p1 x="320" y="260"/>
       <p2 x="480" y="260"/>
     </wire>
@@ -505,16 +492,12 @@ endmodule</string>
       <p2 x="920" y="260"/>
     </wire>
     <wire>
-      <p1 x="840" y="580"/>
-      <p2 x="960" y="580"/>
+      <p1 x="860" y="520"/>
+      <p2 x="960" y="520"/>
     </wire>
     <wire>
       <p1 x="680" y="360"/>
       <p2 x="820" y="360"/>
-    </wire>
-    <wire>
-      <p1 x="860" y="520"/>
-      <p2 x="960" y="520"/>
     </wire>
     <wire>
       <p1 x="280" y="300"/>
@@ -577,14 +560,6 @@ endmodule</string>
       <p2 x="320" y="380"/>
     </wire>
     <wire>
-      <p1 x="680" y="380"/>
-      <p2 x="800" y="380"/>
-    </wire>
-    <wire>
-      <p1 x="800" y="700"/>
-      <p2 x="960" y="700"/>
-    </wire>
-    <wire>
       <p1 x="320" y="260"/>
       <p2 x="320" y="380"/>
     </wire>
@@ -593,8 +568,8 @@ endmodule</string>
       <p2 x="880" y="460"/>
     </wire>
     <wire>
-      <p1 x="800" y="380"/>
-      <p2 x="800" y="700"/>
+      <p1 x="820" y="360"/>
+      <p2 x="820" y="640"/>
     </wire>
     <wire>
       <p1 x="900" y="280"/>
@@ -605,16 +580,16 @@ endmodule</string>
       <p2 x="340" y="460"/>
     </wire>
     <wire>
-      <p1 x="820" y="360"/>
-      <p2 x="820" y="640"/>
+      <p1 x="840" y="340"/>
+      <p2 x="840" y="580"/>
     </wire>
     <wire>
       <p1 x="920" y="260"/>
       <p2 x="920" y="340"/>
     </wire>
     <wire>
-      <p1 x="840" y="340"/>
-      <p2 x="840" y="580"/>
+      <p1 x="860" y="320"/>
+      <p2 x="860" y="520"/>
     </wire>
     <wire>
       <p1 x="300" y="240"/>
@@ -623,10 +598,6 @@ endmodule</string>
     <wire>
       <p1 x="940" y="240"/>
       <p2 x="940" y="280"/>
-    </wire>
-    <wire>
-      <p1 x="860" y="320"/>
-      <p2 x="860" y="520"/>
     </wire>
   </wires>
   <measurementOrdering/>

@@ -118,8 +118,8 @@ module cmp(op, in1, in2, out);
 				if($unsigned(in1) &gt;= $unsigned(in2)) 
 					out = 1; 
 				else
-					out = 0;
-			default: out = 1;
+					out = 1;
+			default: out = 0;
 		endcase
 	end
 endmodule</string>

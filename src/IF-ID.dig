@@ -3,12 +3,12 @@
   <version>1</version>
   <attributes>
     <entry>
-      <string>Label</string>
-      <string>IF/ID</string>
-    </entry>
-    <entry>
       <string>shapeType</string>
       <shapeType>LAYOUT</shapeType>
+    </entry>
+    <entry>
+      <string>Label</string>
+      <string>IF/ID</string>
     </entry>
     <entry>
       <string>Width</string>
@@ -28,7 +28,7 @@
           <int>32</int>
         </entry>
       </elementAttributes>
-      <pos x="440" y="380"/>
+      <pos x="440" y="460"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -42,22 +42,22 @@
           <int>32</int>
         </entry>
       </elementAttributes>
-      <pos x="440" y="460"/>
+      <pos x="440" y="540"/>
     </visualElement>
     <visualElement>
       <elementName>External</elementName>
       <elementAttributes>
         <entry>
-          <string>Label</string>
-          <string>IF_ID</string>
-        </entry>
-        <entry>
           <string>applicationType</string>
           <appType>IVERILOG</appType>
         </entry>
         <entry>
+          <string>Label</string>
+          <string>IF_ID</string>
+        </entry>
+        <entry>
           <string>externalInputs</string>
-          <string>clk,rst,pc_in:32,inst_in:32</string>
+          <string>clk,rst,write,pc_in:32,inst_in:32</string>
         </entry>
         <entry>
           <string>Width</string>
@@ -69,8 +69,8 @@
         </entry>
         <entry>
           <string>Code</string>
-          <string>module IF_ID(clk, rst, pc_in, inst_in, pc_out, inst_out);
-	input clk, rst;
+          <string>module IF_ID(clk, rst, write, pc_in, inst_in, pc_out, inst_out);
+	input clk, rst, write;
 	input [31:0] pc_in, inst_in;
 	output [31:0] pc_out, inst_out;
 	
@@ -81,9 +81,10 @@
 		if (rst)
 		begin
 			pc_out = 0;
-			inst_out = 0;
+			// rst时，将指令置为&apos;0号寄存器加0放到0号寄存器&apos;这样的无效指令
+			inst_out = &apos;h00000013;
 		end
-		else 
+		else if (write)
 		begin
 			pc_out = pc_in;
 			inst_out = inst_in;
@@ -143,6 +144,16 @@ endmodule</string>
       </elementAttributes>
       <pos x="440" y="300"/>
     </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>write</string>
+        </entry>
+      </elementAttributes>
+      <pos x="440" y="380"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -178,6 +189,10 @@ endmodule</string>
       <p2 x="900" y="300"/>
     </wire>
     <wire>
+      <p1 x="520" y="300"/>
+      <p2 x="580" y="300"/>
+    </wire>
+    <wire>
       <p1 x="440" y="380"/>
       <p2 x="480" y="380"/>
     </wire>
@@ -186,16 +201,24 @@ endmodule</string>
       <p2 x="500" y="460"/>
     </wire>
     <wire>
-      <p1 x="480" y="260"/>
-      <p2 x="480" y="380"/>
+      <p1 x="440" y="540"/>
+      <p2 x="520" y="540"/>
     </wire>
     <wire>
       <p1 x="880" y="240"/>
       <p2 x="880" y="300"/>
     </wire>
     <wire>
+      <p1 x="480" y="260"/>
+      <p2 x="480" y="380"/>
+    </wire>
+    <wire>
       <p1 x="500" y="280"/>
       <p2 x="500" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="300"/>
+      <p2 x="520" y="540"/>
     </wire>
     <wire>
       <p1 x="460" y="240"/>
