@@ -4,10 +4,6 @@ addi t2, zero, 3
 
 for_loop:
 	addi t1, t1, 1
-	
-	addi t4, zero, 15
-	addi t4, zero, 15
-	
 	blt t1, t2, for_loop
 	
 for_loop_return:
